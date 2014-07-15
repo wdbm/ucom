@@ -53,6 +53,22 @@ UCOM can be run in Xephyr in a way such as the following:
     Xephyr -screen 1024x768 -br :1
     DISPLAY=:1 python ucom.py
 
+# useful programs
+
+Some programs are of particular use with UCOM.
+
+## Maximus
+
+Maximus is a program that is designed to maximise the windows of running programs. It can be useful for clarity and for efficient use of space.
+
+    sudo apt-get install maximus
+
+## ranger
+
+Ranger is a text-based file and directory manager written in Python.
+
+    sudo apt-get install ranger
+
 # future
 
 Tiling capabilities are under consideration.
