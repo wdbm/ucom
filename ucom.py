@@ -20,15 +20,18 @@
 #                                                                              #
 # This program is distributed in the hope that it will be useful, but WITHOUT  #
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or        #
-# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for    #
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for     #
 # more details.                                                                #
 #                                                                              #
 # For a copy of the GNU General Public License, see                            #
 # <http://www.gnu.org/licenses/>.                                              #
 #                                                                              #
 ################################################################################
-
 from __future__ import print_function
+
+name    = "UCOM"
+version = "2015-11-29T2000Z"
+
 import os
 import sys
 import traceback
@@ -45,14 +48,14 @@ class Program(object):
         # name
         self.name                      = "UCOM"
         # commands and options
-        self.commandxterm              = ['/usr/bin/xterm']
-        self.commandGNOMETerminal      = ['/usr/bin/gnome-terminal']
+        self.commandxterm              = ["/usr/bin/xterm"]
+        self.commandGNOMETerminal      = ["/usr/bin/gnome-terminal"]
         self.commandDefaultTerminal    = self.commandxterm
         # startup procedures
         self.StartupProcedures = [
-                                       '/usr/games/xphoon',
-                                       #'/usr/bin/xcalc',
-                                       #'/usr/bin/dmenu',
+                                       "/usr/games/xphoon",
+                                       #"/usr/bin/xcalc",
+                                       #"/usr/bin/dmenu",
         ]
         self.requiredXlibVersion       = (0, 14)
         self.maximumNumberOfExceptions = 25
@@ -71,13 +74,13 @@ class Program(object):
             logger.info(
                 "Xlib version 0.14 is required; {version} was found".
                 format(
-                    version='.'.join(str(i) for i in Xlib.__version__)
+                    version=".".join(str(i) for i in Xlib.__version__)
                 )
             )
             print(
                 "Xlib version 0.14 is required; {version} was found".
                 format(
-                    version='.'.join(str(i) for i in Xlib.__version__),
+                    version=".".join(str(i) for i in Xlib.__version__),
                     file = sys.stderr
                 )
             )
@@ -91,7 +94,7 @@ class Program(object):
             print("no unmanaged screens found", file = sys.stderr)
             return 2
         try:
-            windowManager.mainLoop()
+            windowManager.main_loop()
         except KeyboardInterrupt:
             logger.info("keyboard interrupt")
             return 0
@@ -115,48 +118,48 @@ class WindowManager(object):
         self.dragOffset = (0, 0)
         # If there is a display, get a name for it.
         if display is not None:
-            os.environ['DISPLAY'] = display.get_display_name()
+            os.environ["DISPLAY"] = display.get_display_name()
         self.enterCodes = set(
             code for code,
             index in self.display.keysym_to_keycodes(Xlib.XK.XK_Return)
         )
         self.screens = []
         for screen_id in xrange(0, display.screen_count()):
-            if self.redirectScreenEvents(screen_id):
+            if self.redirect_screen_events(screen_id):
                 self.screens.append(screen_id)
         if len(self.screens) == 0:
             raise ExceptionNoUnmanagedScreens()
-        self.display.set_error_handler(self.XErrorHandler)
+        self.display.set_error_handler(self.X_error_handler)
         # Run startup procedures.
         self.startup()
         # Prepare to handle events.
         self.event_dispatch_table = {
-            Xlib.X.KeyPress:         self.handleKeyPress,
-            Xlib.X.KeyRelease:       self.handleKeyRelease,
-            Xlib.X.ButtonPress:      self.handleButtonPress,
-            Xlib.X.ButtonRelease:    self.handleButtonRelease,
-            Xlib.X.MapRequest:       self.handleMapRequest,
-            Xlib.X.MappingNotify:    self.handleMappingNotify,
-            Xlib.X.MotionNotify:     self.handleMotionNotify,
-            Xlib.X.ConfigureRequest: self.handleConfigureRequest,
+            Xlib.X.KeyPress:         self.handle_key_press,
+            Xlib.X.KeyRelease:       self.handle_key_release,
+            Xlib.X.ButtonPress:      self.handle_button_press,
+            Xlib.X.ButtonRelease:    self.handle_button_release,
+            Xlib.X.MapRequest:       self.handle_map_request,
+            Xlib.X.MappingNotify:    self.handle_mapping_notify,
+            Xlib.X.MotionNotify:     self.handle_motion_notify,
+            Xlib.X.ConfigureRequest: self.handle_configure_request,
         }
 
     def startup(self):
-        '''
+        """
         This method runs the startup procedures (system commands) for the
         interface environment.
-        '''
+        """
         for procedure in program.StartupProcedures:
             self.system([procedure])
 
-    def redirectScreenEvents(
+    def redirect_screen_events(
         self,
         screen_id
         ):
-        '''
+        """
         This method attempts to redirect the screen events and returns True on
         success.
-        '''
+        """
         rootWindow = self.display.screen(screen_id).root
         errorCatcher = Xlib.error.CatchError(Xlib.error.BadAccess)
         mask = Xlib.X.SubstructureRedirectMask
@@ -183,18 +186,18 @@ class WindowManager(object):
                 "detecting grab events for window {0}".
                 format(window)
             )
-            self.windowGrabEvents(window)
+            self.window_grab_events(window)
         return True
 
-    def mainLoop(self):
-        '''
+    def main_loop(self):
+        """
         Loop until there is a Ctrl C interruption or exceptions have occurred
         more than the specified maximum number of exceptions.
-        '''
+        """
         errorCount = 0
         while True:
             try:
-                self.handleEvent()
+                self.handle_event()
             except (KeyboardInterrupt, SystemExit):
                 raise
             except:
@@ -203,10 +206,10 @@ class WindowManager(object):
                     raise
                 traceback.print_exc()
 
-    def handleEvent(self):
-        '''
+    def handle_event(self):
+        """
         Wait for the next event and handle it.
-        '''
+        """
         try:
             event = self.display.next_event()
         except Xlib.error.ConnectionClosedError:
@@ -219,7 +222,7 @@ class WindowManager(object):
         else:
             logger.info("unhandled event: {event}".format(event = event))
 
-    def handleKeyPress(
+    def handle_key_press(
         self,
         event
         ):
@@ -227,13 +230,13 @@ class WindowManager(object):
             # Alt Enter: start terminal
             self.system(program.commandDefaultTerminal)
 
-    def handleKeyRelease(
+    def handle_key_release(
         self,
         event
         ):
         pass
 
-    def handleButtonPress(
+    def handle_button_press(
         self,
         event
         ):
@@ -241,23 +244,23 @@ class WindowManager(object):
             # right-click: raise window
             event.window.configure(stack_mode = Xlib.X.Above)
 
-    def handleButtonRelease(
+    def handle_button_release(
         self,
         event
         ):
         self.dragWindow = None
 
-    def handleMapRequest(self, event):
+    def handle_map_request(self, event):
         event.window.map()
-        self.windowGrabEvents(event.window)
+        self.window_grab_events(event.window)
 
-    def windowGrabEvents(
+    def window_grab_events(
         self,
         window
         ):
-        '''
+        """
         Detect right-click and drag events on the window.
-        '''
+        """
         window.grab_button(
             3,
             0,
@@ -272,19 +275,19 @@ class WindowManager(object):
             None
         )
 
-    def handleMappingNotify(
+    def handle_mapping_notify(
         self,
         event
         ):
         self.display.refresh_keyboard_mapping(event)
 
-    def handleMotionNotify(
+    def handle_motion_notify(
         self,
         event
         ):
-        '''
+        """
         Drag a window.
-        '''
+        """
         if event.state & Xlib.X.Button3MotionMask:
             if self.dragWindow is None:
                 # start drag
@@ -301,33 +304,33 @@ class WindowManager(object):
                     y = y + event.root_y
                 )
 
-    def handleConfigureRequest(
+    def handle_configure_request(
         self,
         event
         ):
         window = event.window
-        arguments = {'border_width': 3}
+        arguments = {"border_width": 3}
         if event.value_mask & Xlib.X.CWX:
-            arguments['x']          = event.x
+            arguments["x"]          = event.x
         if event.value_mask & Xlib.X.CWY:
-            arguments['y']          = event.y
+            arguments["y"]          = event.y
         if event.value_mask & Xlib.X.CWWidth:
-            arguments['width']      = event.width
+            arguments["width"]      = event.width
         if event.value_mask & Xlib.X.CWHeight:
-            arguments['height']     = event.height
+            arguments["height"]     = event.height
         if event.value_mask & Xlib.X.CWSibling:
-            arguments['sibling']    = event.above
+            arguments["sibling"]    = event.above
         if event.value_mask & Xlib.X.CWStackMode:
-            arguments['stack_mode'] = event.stack_mode
+            arguments["stack_mode"] = event.stack_mode
         window.configure(**arguments)
 
     def system(
         self,
         command
         ):
-        '''
+        """
         This method forks a command and then disowns it.
-        '''
+        """
         if os.fork() != 0:
             return
         try:
@@ -335,7 +338,7 @@ class WindowManager(object):
             os.setsid() # become session leader
             if os.fork() != 0:
                 os._exit(0)
-            os.chdir(os.path.expanduser('~'))
+            os.chdir(os.path.expanduser("~"))
             os.umask(0)
             # Close all file descriptors.
             import resource
@@ -350,7 +353,7 @@ class WindowManager(object):
                 except OSError:
                     pass
             # Open /dev/null for stdin, stdout and stderr.
-            os.open('/dev/null', os.O_RDWR)
+            os.open("/dev/null", os.O_RDWR)
             os.dup2(0, 1)
             os.dup2(0, 2)
             os.execve(
@@ -368,7 +371,7 @@ class WindowManager(object):
                 pass
             sys.exit(1)
 
-    def XErrorHandler(
+    def X_error_handler(
         self,
         error,
         request
@@ -384,5 +387,5 @@ def main():
     program = Program()
     program.run()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())
