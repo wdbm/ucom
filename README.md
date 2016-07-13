@@ -8,6 +8,8 @@ Xlib is an X Window System protocol client library written in C. It features fun
 
 ![](images/screenshot_1.png)
 
+![](images/screenshot_2.png)
+
 # setup
 
 Setup, update and removal scripts are provided by [ucomsys](https://github.com/wdbm/ucomsys).
